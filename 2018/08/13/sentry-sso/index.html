@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="领到的第一个任务是给 sentry 添加 sso。首先要整体了解一下各个概念。 公司使用cas来实现sso，理论上来讲支持三种协议：cas, OAuth2, SAML2。 选择主要考虑三种协议：cas, OAuth2, SAML2。 查了一些官方关于这些的回复：   cas  It’s very possible it won’t work.可能需要改源码.  OAuth  有两个官方维护的 Pr">
+<meta property="og:type" content="article">
+<meta property="og:title" content="sentry-sso">
+<meta property="og:url" content="http://yoursite.com/2018/08/13/sentry-sso/index.html">
+<meta property="og:site_name" content="Writing-Promoting">
+<meta property="og:description" content="领到的第一个任务是给 sentry 添加 sso。首先要整体了解一下各个概念。 公司使用cas来实现sso，理论上来讲支持三种协议：cas, OAuth2, SAML2。 选择主要考虑三种协议：cas, OAuth2, SAML2。 查了一些官方关于这些的回复：   cas  It’s very possible it won’t work.可能需要改源码.  OAuth  有两个官方维护的 Pr">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-01-15T13:18:35.059Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="sentry-sso">
+<meta name="twitter:description" content="领到的第一个任务是给 sentry 添加 sso。首先要整体了解一下各个概念。 公司使用cas来实现sso，理论上来讲支持三种协议：cas, OAuth2, SAML2。 选择主要考虑三种协议：cas, OAuth2, SAML2。 查了一些官方关于这些的回复：   cas  It’s very possible it won’t work.可能需要改源码.  OAuth  有两个官方维护的 Pr">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/08/13/sentry-sso/">
+
+
+
+
+
+  <title>sentry-sso | Writing-Promoting</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="default">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Writing-Promoting</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/08/13/sentry-sso/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Amorites">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Writing-Promoting">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">sentry-sso</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-08-13T18:32:19+00:00">
+                2018-08-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>领到的第一个任务是给 sentry 添加 sso。首先要整体了解一下各个概念。</p>
+<p>公司使用cas来实现sso，理论上来讲支持三种协议：cas, OAuth2, SAML2。</p>
+<h2 id="选择"><a href="#选择" class="headerlink" title="选择"></a>选择</h2><p>主要考虑三种协议：cas, OAuth2, SAML2。</p>
+<p>查了一些官方关于这些的回复： </p>
+<ul>
+<li><a href="https://github.com/getsentry/sentry/issues/3854" target="_blank" rel="noopener">cas</a></li>
+</ul>
+<p>It’s very possible it won’t work.可能需要改源码.</p>
+<ul>
+<li><a href="https://docs.sentry.io/server/sso/" target="_blank" rel="noopener">OAuth</a></li>
+</ul>
+<p>有两个官方维护的 Provider，支持了github和google。查了查还有个人维护的gitlab的版本,想接入公司的应该需要参考这些自己实现一个。</p>
+<p>而其关于Custom Providers的说法是：</p>
+<blockquote>
+<blockquote>
+<p>At this time the API is considered unstable and subject to change. Things likely won’t change a lot, but there’s a few areas that need cleaned up.</p>
+</blockquote>
+</blockquote>
+<p>不太稳定还有点麻烦的感觉，如果有其他的办法还是尽量避免。</p>
+<ul>
+<li><a href="https://docs.sentry.io/learn/sso/" target="_blank" rel="noopener">SAML2</a></li>
+</ul>
+<p>除了支持几个SASS服务外，还有一个 generic provider，提供一个配置界面，看来这就是我们需要的。</p>
+<p>于是最终决定用SAML2</p>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>首先参考插件<a href="https://github.com/getsentry/sentry-auth-saml2" target="_blank" rel="noopener">sentry-auth-saml2</a>的文档，知道大概的流程是添加这个插件然后重启服务就可以了。</p>
+<p>整个服务是使用<a href="https://github.com/getsentry/onpremise" target="_blank" rel="noopener">sentry onpremise</a>搭建的，按理来说把插件的地址加入到requirements.txt就可以了。但实际上在build的时候会提示缺少依赖，google了一下，貌似是无法被pip直接安装的东西，需要用apt-get先手动安装，于是把pip install直接写在了Dockerfile里面。</p>
+<p>总结下来就是以下几步：</p>
+<ol>
+<li>修改sentry.conf.py，添加一行<code>SENTRY_FEATURES[&#39;organizations:sso-saml2&#39;] = True</code>开启SAML2验证（后续的版本可能会默认开启，未必是必须）</li>
+<li>修改Dockerfile，加入如下两行添加插件<code>RUN apt-get update &amp;&amp; apt-get install -y pkg-config xmlsec1 libxmlsec1-dev
+RUN pip install https://github.com/getsentry/sentry-auth-saml2/archive/master.zip</code></li>
+<li>重新构建、启动、部署，在onpremise上已经添加了相关的文档，命令是：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker-compose build # Build the services again after updating</span><br><span class="line">docker-compose run --rm web upgrade # Run new migrations</span><br><span class="line">docker-compose up -d # Recreate the services</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>完成之后，在orgnazition setting - auth下就出现了配置saml2的按钮。</p>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>重启服务之后可以看见sentry网站上的auth可用了，但是在配置的时候又遇到了问题。</p>
+<p>需要利用<a href="https://www.samltool.com/sp_metadata.php" target="_blank" rel="noopener">工具</a>先生成一份配置给cas，cas配置好，最后在sentry里填好 cas 的信息就大功告成了。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/05/2018年度规划/" rel="next" title="2018年度规划">
+                <i class="fa fa-chevron-left"></i> 2018年度规划
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/01/15/draft/" rel="prev" title="2018年度总结">
+                2018年度总结 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Amorites</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#选择"><span class="nav-number">1.</span> <span class="nav-text">选择</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现"><span class="nav-number">2.</span> <span class="nav-text">实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置"><span class="nav-number">3.</span> <span class="nav-text">配置</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Amorites</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
